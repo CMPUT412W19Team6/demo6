@@ -123,9 +123,16 @@ class Move(State):
 
         # calculate next goal
         if CURRENT_STATE == "MoveToSide":
+            quaternion = quaternion_from_euler(0, 0, 0)
+
             userdata.goal = MoveBaseGoal()
             userdata.goal.target_pose.header.frame_id = "base_footprint"
             userdata.goal.target_pose.pose.position.x = 1
+
+            goal.target_pose.pose.orientation.x = quaternion[0]
+            goal.target_pose.pose.orientation.y = quaternion[1]
+            goal.target_pose.pose.orientation.z = quaternion[2]
+            goal.target_pose.pose.orientation.w = quaternion[3]
             print("set goal for forward")
 
         elif CURRENT_STATE == "MoveForward":
