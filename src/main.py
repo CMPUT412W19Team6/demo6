@@ -34,6 +34,8 @@ client = None
 TAGS_IN_TOTAL = 3
 CURRENT_STATE = None
 
+PUSH_GOAL = None
+
 
 class Turn(State):
     def __init__(self):
@@ -110,10 +112,13 @@ class Move(State):
         self.state = state
 
     def execute(self, userdata):
-        global client, TAGS_FOUND, START_POSE, TAGS_IN_TOTAL, CURRENT_POSE
+        global client, TAGS_FOUND, START_POSE, TAGS_IN_TOTAL, CURRENT_POSE, PUSH_GOAL
         global CURRENT_STATE
 
         CURRENT_STATE = self.state
+        if CURRENT_STATE == "MoveBehind":
+            userdata.goal = PUSH_GOAL
+
         userdata.goal.target_pose.header.stamp = rospy.Time.now()
         print("CUrrent STATE", CURRENT_STATE)
         result = self.move_base_client.send_goal_and_wait(userdata.goal)
@@ -136,8 +141,7 @@ class Move(State):
             print("set goal for forward")
 
         elif CURRENT_STATE == "MoveForward":
-            userdata.goal.target_pose.pose.position.y -= 0.85
-            print("djashfkashjdjaslkjglkasjlkd")
+            pass
             # TODO: change orientation
         elif CURRENT_STATE == "MoveBehind":
             pass
@@ -160,7 +164,7 @@ class MoveCloser(State):
         self.listener = tf.TransformListener()
 
     def execute(self, userdata):
-        global CURRENT_POSE
+        global CURRENT_POSE, PUSH_GOAL
         global CURRENT_STATE, START_POSE
         CURRENT_STATE = "move_closer"
 
@@ -211,10 +215,27 @@ class MoveCloser(State):
         # else:
         #     pose.point.x = 0.1
 
+        pose_for_push = PointStamped()
+        pose_for_push.header.frame_id = "ar_marker_" + str(self.current_marker)
+        pose_for_push.header.stamp = rospy.Time(0)
+        pose_for_push.point.z = -0.6
+
         self.listener.waitForTransform(
             "odom", pose.header.frame_id, rospy.Time(0), rospy.Duration(4))
 
         pose_transformed = self.listener.transformPoint("odom", pose)
+        pose_for_push_transformed = self.listener.transformPoint(
+            "odom", pose_for_push)
+
+        PUSH_GOAL = MoveBaseGoal()
+        q = quaternion_from_euler(0, 0, 0)
+        PUSH_GOAL.target_pose.header.frame_id = "odom"
+        PUSH_GOAL.target_pose.pose.position.x = pose_for_push_transformed.point.x
+        PUSH_GOAL.target_pose.pose.position.y = pose_for_push_transformed.point.y
+        PUSH_GOAL.target_pose.pose.orientation.x = q[0]
+        PUSH_GOAL.target_pose.pose.orientation.y = q[1]
+        PUSH_GOAL.target_pose.pose.orientation.z = q[2]
+        PUSH_GOAL.target_pose.pose.orientation.w = q[3]
 
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "odom"
