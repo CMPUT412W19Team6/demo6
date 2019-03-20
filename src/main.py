@@ -118,8 +118,15 @@ class Move(State):
         if result != 3:
             pass  # return "failed"
 
-        # TODO: calculate next goal
+        # calculate next goal
+        if CURRENT_STATE == "MoveToSide":
+            userdata.goal.target_pose.pose.position.x += 1
 
+        elif CURRENT_STATE == "MoveForward":
+            userdata.goal.target_pose.pose.position.y -= 0.85
+            # TODO: change orientation
+        elif CURRENT_STATE == "MoveBehind":
+            pass
         return "done"
 
 
@@ -151,21 +158,21 @@ class MoveCloser(State):
         min_linear_speed = 0.0
 
         while True:
-            if self.tag_pose_base is not None and self.tag_pose_base.position.x < 0.5:
+            if self.tag_pose_base is not None and self.tag_pose_base.position.x < 0.70:
                 break
             elif self.tag_pose_base is not None and self.tag_pose_base.position.x > 0.5:
                 move_cmd = Twist()
 
-                if self.tag_pose_base.position.x > 0.6:  # goal too far
+                if self.tag_pose_base.position.x > 0.8:  # goal too far
                     move_cmd.linear.x += 0.1
-                elif self.tag_pose_base.position.x > 0.5:  # goal too close
+                elif self.tag_pose_base.position.x > 0.7:  # goal too close
                     move_cmd.linear.x -= 0.1
                 else:
                     move_cmd.linear.x = 0
 
-                if self.tag_pose_base.position.y < 1e-3:  # goal to the left
+                if self.tag_pose_base.position.x < 1e-3:  # goal to the left
                     move_cmd.angular.z -= 0.1
-                elif self.tag_pose_base.position.y > -1e-3:  # goal to the right
+                elif self.tag_pose_base.position.x > -1e-3:  # goal to the right
                     move_cmd.angular.z += 0.1
                 else:
                     move_cmd.angular.z = 0
@@ -183,8 +190,8 @@ class MoveCloser(State):
         pose = PointStamped()
         pose.header.frame_id = "ar_marker_" + str(self.current_marker)
         pose.header.stamp = rospy.Time(0)
-        pose.point.z = self.distance_from_marker
-        pose.point.x = 0.75
+        pose.point.x = self.distance_from_marker
+        pose.point.y = 0.85
         # if self.current_marker == 2:
         #     pose.point.x = -0.1
         # else:
