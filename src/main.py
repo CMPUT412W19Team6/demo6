@@ -120,8 +120,8 @@ class Move(State):
 
         # calculate next goal
         if CURRENT_STATE == "MoveToSide":
-            user.goal = MoveBaseGoal()
-            user.goal.target_pose.header.frame_id = "base_link"
+            userdata.goal = MoveBaseGoal()
+            userdata.goal.target_pose.header.frame_id = "base_link"
             userdata.goal.target_pose.pose.position.x = 1
 
         elif CURRENT_STATE == "MoveForward":
@@ -194,7 +194,7 @@ class MoveCloser(State):
         pose.header.frame_id = "ar_marker_" + str(self.current_marker)
         pose.header.stamp = rospy.Time(0)
         pose.point.x = self.distance_from_marker
-        pose.point.y = 0.85
+        pose.point.y = 1.5
         # if self.current_marker == 2:
         #     pose.point.x = -0.1
         # else:
@@ -299,7 +299,7 @@ if __name__ == "__main__":
                          "done": "MoveForward", "failed": "failure"})
 
         StateMachine.add("MoveForward", Move('MoveForward'), transitions={
-                         "done": "MoveBehind", "failed": "failure"})
+                         "done": "success", "failed": "failure"})
 
         StateMachine.add("MoveBehind", Move('MoveBehind'), transitions={
                          "done": "PushBox", "failed": "failure"})
