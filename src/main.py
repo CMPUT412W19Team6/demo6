@@ -113,6 +113,7 @@ class Move(State):
         global client, TAGS_FOUND, START_POSE, TAGS_IN_TOTAL, CURRENT_POSE
         global CURRENT_STATE
         userdata.goal.target_pose.header.stamp = rospy.Time.now()
+        print("CUrrent STATE", CURRENT_STATE)
         result = self.move_base_client.send_goal_and_wait(userdata.goal)
 
         if result != 3:
@@ -123,6 +124,7 @@ class Move(State):
             userdata.goal = MoveBaseGoal()
             userdata.goal.target_pose.header.frame_id = "base_footprint"
             userdata.goal.target_pose.pose.position.x = 1
+            print("set goal for forward")
 
         elif CURRENT_STATE == "MoveForward":
             userdata.goal.target_pose.pose.position.y -= 0.85
