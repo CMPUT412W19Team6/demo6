@@ -69,8 +69,9 @@ class Turn(State):
         pose.header.stamp = rospy.Time(0)
         pose.point.z = -self.distance_from_marker
 
-        self.listener.waitForTransform("odom", pose.header.frame_id, rospy.Time(0),rospy.Duration(4))
-        
+        self.listener.waitForTransform(
+            "odom", pose.header.frame_id, rospy.Time(0), rospy.Duration(4))
+
         pose_transformed = self.listener.transformPoint("odom", pose)
 
         goal = MoveBaseGoal()
@@ -95,35 +96,127 @@ class Turn(State):
             TAG_POSE = msg.pose.pose
             self.detected_marker = msg.id
 
-class MoveBehind(State):
-    def __init__(self):
+
+class Move(State):
+    def __init__(self, state):
+        global CURRENT_POSE
         State.__init__(self, outcomes=["failed", "done"],
-                            input_keys=["goal", "current_marker"],
-                            output_keys=["current_marker"])
+                       input_keys=["goal", "current_marker"],
+                       output_keys=["current_marker", "goal"])
         self.rate = rospy.Rate(10)
 
         self.move_base_client = actionlib.SimpleActionClient(
             "move_base", MoveBaseAction)
+        CURRENT_POSE = state
 
     def execute(self, userdata):
         global client, TAGS_FOUND, START_POSE, TAGS_IN_TOTAL, CURRENT_POSE
         global CURRENT_STATE
-        CURRENT_STATE = "navigate"
-
-        
         userdata.goal.target_pose.header.stamp = rospy.Time.now()
         result = self.move_base_client.send_goal_and_wait(userdata.goal)
 
         if result != 3:
-            pass #return "failed"
+            pass  # return "failed"
+
+        # TODO: calculate next goal
 
         return "done"
+
+
+class MoveCloser(State):
+    def __init__(self):
+        State.__init__(self, outcomes=["close_enough"], output_keys=[
+                       "goal"], input_keys=["current_marker"])
+        self.rate = rospy.Rate(10)
+        self.vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
+        self.marker_sub = rospy.Subscriber(
+            'ar_pose_marker_base', AlvarMarkers, self.marker_callback_base)
+
+        self.current_marker = None
+        self.tag_pose_base = None
+        self.distance_from_marker = 0.3
+
+        self.listener = tf.TransformListener()
+
+    def execute(self, userdata):
+        global CURRENT_POSE
+        global CURRENT_STATE, START_POSE
+        CURRENT_STATE = "move_closer"
+
+        self.tag_pose_base = None
+        self.current_marker = userdata.current_marker
+        max_angular_speed = 0.8
+        min_angular_speed = 0.0
+        max_linear_speed = 0.8
+        min_linear_speed = 0.0
+
+        while True:
+            if self.tag_pose_base is not None and self.tag_pose_base.position.x < 0.5:
+                break
+            elif self.tag_pose_base is not None and self.tag_pose_base.position.x > 0.5:
+                move_cmd = Twist()
+
+                if self.tag_pose_base.position.x > 0.6:  # goal too far
+                    move_cmd.linear.x += 0.1
+                elif self.tag_pose_base.position.x > 0.5:  # goal too close
+                    move_cmd.linear.x -= 0.1
+                else:
+                    move_cmd.linear.x = 0
+
+                if self.tag_pose_base.position.y < 1e-3:  # goal to the left
+                    move_cmd.angular.z -= 0.1
+                elif self.tag_pose_base.position.y > -1e-3:  # goal to the right
+                    move_cmd.angular.z += 0.1
+                else:
+                    move_cmd.angular.z = 0
+
+                move_cmd.linear.x = math.copysign(max(min_linear_speed, min(
+                    abs(move_cmd.linear.x), max_linear_speed)), move_cmd.linear.x)
+                move_cmd.angular.z = math.copysign(max(min_angular_speed, min(
+                    abs(move_cmd.angular.z), max_angular_speed)), move_cmd.angular.z)
+
+                move_cmd.linear.x = abs(move_cmd.linear.x)
+
+                self.vel_pub.publish(move_cmd)
+            self.rate.sleep()
+
+        pose = PointStamped()
+        pose.header.frame_id = "ar_marker_" + str(self.current_marker)
+        pose.header.stamp = rospy.Time(0)
+        pose.point.z = self.distance_from_marker
+        pose.point.x = 0.75
+        # if self.current_marker == 2:
+        #     pose.point.x = -0.1
+        # else:
+        #     pose.point.x = 0.1
+
+        self.listener.waitForTransform(
+            "odom", pose.header.frame_id, rospy.Time(0), rospy.Duration(4))
+
+        pose_transformed = self.listener.transformPoint("odom", pose)
+
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "odom"
+        goal.target_pose.pose.position.x = pose_transformed.point.x
+        goal.target_pose.pose.position.y = pose_transformed.point.y
+        goal.target_pose.pose.orientation = START_POSE.orientation
+        userdata.goal = goal
+
+        return "close_enough"
+
+    def marker_callback_base(self, msg):
+        global CURRENT_STATE
+        if CURRENT_STATE == "move_closer" and self.current_marker is not None:
+            for marker in msg.markers:
+                if marker.id == self.current_marker:
+                    self.tag_pose_base = marker.pose.pose
+
 
 class FixAlignment(State):
     def __init__(self):
         State.__init__(self, outcomes=["failed", "done"],
-                            input_keys=["current_marker"],
-                            output_keys=["current_marker"])
+                       input_keys=["current_marker"],
+                       output_keys=["current_marker"])
         self.rate = rospy.Rate(10)
 
         self.move_base_client = actionlib.SimpleActionClient(
@@ -134,7 +227,6 @@ class FixAlignment(State):
         # global CURRENT_STATE
         # CURRENT_STATE = "navigate"
 
-        
         # userdata.goal.target_pose.header.stamp = rospy.Time.now()
         # result = self.move_base_client.send_goal_and_wait(userdata.goal)
 
@@ -143,11 +235,12 @@ class FixAlignment(State):
 
         return "done"
 
+
 class PushBox(State):
     def __init__(self):
         State.__init__(self, outcomes=["failed", "done"],
-                            input_keys=["current_marker"],
-                            output_keys=["current_marker"])
+                       input_keys=["current_marker"],
+                       output_keys=["current_marker"])
         self.rate = rospy.Rate(10)
 
         self.move_base_client = actionlib.SimpleActionClient(
@@ -187,10 +280,19 @@ if __name__ == "__main__":
     with sm:
 
         StateMachine.add("FindAR", Turn(), transitions={
-                         "found": "MoveBehind"})
+                         "found": "MoveClose"})
 
-        StateMachine.add("MoveBehind", MoveBehind(), transitions={
-                         "done": "PushBox", "failed": "MoveBehind"})
+        StateMachine.add("MoveClose", MoveCloser(), transitions={
+                         "close_enough": "MoveToSide"})
+
+        StateMachine.add("MoveToSide", Move('MoveToSide'), transitions={
+                         "done": "MoveForward", "failed": "failure"})
+
+        StateMachine.add("MoveForward", Move('MoveForward'), transitions={
+                         "done": "MoveBehind", "failed": "failure"})
+
+        StateMachine.add("MoveBehind", Move('MoveBehind'), transitions={
+                         "done": "PushBox", "failed": "failure"})
 
         StateMachine.add("PushBox", PushBox(), transitions={
                          "done": "success", "failed": "failure"})
