@@ -120,10 +120,13 @@ class Move(State):
 
         # calculate next goal
         if CURRENT_STATE == "MoveToSide":
-            userdata.goal.target_pose.pose.position.x += 1
+            user.goal = MoveBaseGoal()
+            user.goal.target_pose.header.frame_id = "base_link"
+            userdata.goal.target_pose.pose.position.x = 1
 
         elif CURRENT_STATE == "MoveForward":
             userdata.goal.target_pose.pose.position.y -= 0.85
+            print("djashfkashjdjaslkjglkasjlkd")
             # TODO: change orientation
         elif CURRENT_STATE == "MoveBehind":
             pass
@@ -158,14 +161,14 @@ class MoveCloser(State):
         min_linear_speed = 0.0
 
         while True:
-            if self.tag_pose_base is not None and self.tag_pose_base.position.x < 0.70:
+            if self.tag_pose_base is not None and self.tag_pose_base.position.x < 0.80:
                 break
-            elif self.tag_pose_base is not None and self.tag_pose_base.position.x > 0.5:
+            elif self.tag_pose_base is not None and self.tag_pose_base.position.x > 0.8:
                 move_cmd = Twist()
 
-                if self.tag_pose_base.position.x > 0.8:  # goal too far
+                if self.tag_pose_base.position.x > 0.9:  # goal too far
                     move_cmd.linear.x += 0.1
-                elif self.tag_pose_base.position.x > 0.7:  # goal too close
+                elif self.tag_pose_base.position.x > 0.8:  # goal too close
                     move_cmd.linear.x -= 0.1
                 else:
                     move_cmd.linear.x = 0
