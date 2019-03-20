@@ -107,11 +107,13 @@ class Move(State):
 
         self.move_base_client = actionlib.SimpleActionClient(
             "move_base", MoveBaseAction)
-        CURRENT_STATE = state
+        self.state = state
 
     def execute(self, userdata):
         global client, TAGS_FOUND, START_POSE, TAGS_IN_TOTAL, CURRENT_POSE
         global CURRENT_STATE
+
+        CURRENT_STATE = self.state
         userdata.goal.target_pose.header.stamp = rospy.Time.now()
         print("CUrrent STATE", CURRENT_STATE)
         result = self.move_base_client.send_goal_and_wait(userdata.goal)
