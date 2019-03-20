@@ -208,8 +208,7 @@ class MoveCloser(State):
         pose = PointStamped()
         pose.header.frame_id = "ar_marker_" + str(self.current_marker)
         pose.header.stamp = rospy.Time(0)
-        pose.point.x = self.distance_from_marker
-        pose.point.y = 1.5
+        pose.point.x = 0.8
         # if self.current_marker == 2:
         #     pose.point.x = -0.1
         # else:
@@ -218,7 +217,7 @@ class MoveCloser(State):
         pose_for_push = PointStamped()
         pose_for_push.header.frame_id = "ar_marker_" + str(self.current_marker)
         pose_for_push.header.stamp = rospy.Time(0)
-        pose_for_push.point.z = -0.6
+        pose_for_push.point.z = -0.8
 
         self.listener.waitForTransform(
             "odom", pose.header.frame_id, rospy.Time(0), rospy.Duration(4))
@@ -228,7 +227,7 @@ class MoveCloser(State):
             "odom", pose_for_push)
 
         PUSH_GOAL = MoveBaseGoal()
-        q = quaternion_from_euler(0, 0, 0)
+        q = quaternion_from_euler(0, 0, 180)
         PUSH_GOAL.target_pose.header.frame_id = "odom"
         PUSH_GOAL.target_pose.pose.position.x = pose_for_push_transformed.point.x
         PUSH_GOAL.target_pose.pose.position.y = pose_for_push_transformed.point.y
