@@ -170,9 +170,9 @@ class MoveCloser(State):
                 else:
                     move_cmd.linear.x = 0
 
-                if self.tag_pose_base.position.x < 1e-3:  # goal to the left
+                if self.tag_pose_base.position.y < 1e-3:  # goal to the left
                     move_cmd.angular.z -= 0.1
-                elif self.tag_pose_base.position.x > -1e-3:  # goal to the right
+                elif self.tag_pose_base.position.y > -1e-3:  # goal to the right
                     move_cmd.angular.z += 0.1
                 else:
                     move_cmd.angular.z = 0
