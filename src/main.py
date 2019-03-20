@@ -38,14 +38,14 @@ CURRENT_STATE = None
 class Turn(State):
     def __init__(self):
         State.__init__(self, outcomes=["found"],
-                       output_keys=["current_marker"])
+                       output_keys=["goal", "current_marker"])
         self.rate = rospy.Rate(10)
         self.cmd_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
         self.marker_sub = rospy.Subscriber(
             'ar_pose_marker_base', AlvarMarkers, self.marker_callback)
         self.detected_marker = None
         self.rate = rospy.Rate(30)
-        self.distance_from_marker = 0.2
+        self.distance_from_marker = 0.8
 
         self.listener = tf.TransformListener()
 

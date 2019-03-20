@@ -4,6 +4,8 @@
     <arg name="joy"                                         default="true"/>
     <arg name="keyboard"                                    default="false"/>
 
+    <arg name="rviz_navigation_configuration_file_location" default="simulation/navigation.rviz"/>
+
     <arg name="odom_topic"                                  default="odom"/>
     <arg name="laser_topic"                                 default="scan"/>
     <arg name="imu_topic"                                   default="/mobile_base/sensors/imu_data"/>
@@ -20,6 +22,8 @@
     <arg name="marker_size"                                 default="19.9" />
 	<arg name="max_new_marker_error"                        default="0.08"/>
 	<arg name="max_track_error"                             default="0.2"/>
+
+    <arg name="rviz_navigation_configuration" value="$(eval find(arg('package')) + '/' + arg('rviz_navigation_configuration_file_location'))"/>
 
     <include file="$(eval find(arg('package')) + '/launch/misc/minimal.launch')"/>
     <include file="$(eval find(arg('package')) + '/launch/misc/3dsensor.launch')"/>
@@ -109,4 +113,5 @@
     </node>
 
     <node pkg="smach_viewer" type="smach_viewer.py" name="smach" />
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_navigation_configuration)"/>
 </launch>
