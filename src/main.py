@@ -331,10 +331,10 @@ if __name__ == "__main__":
                          "done": "MoveForward", "failed": "failure"})
 
         StateMachine.add("MoveForward", Move('MoveForward'), transitions={
-                         "done": "success", "failed": "failure"})
+                         "done": "MoveBehind", "failed": "failure"})
 
         StateMachine.add("MoveBehind", Move('MoveBehind'), transitions={
-                         "done": "PushBox", "failed": "failure"})
+                         "done": "success", "failed": "failure"})
 
         StateMachine.add("PushBox", PushBox(), transitions={
                          "done": "success", "failed": "failure"})
