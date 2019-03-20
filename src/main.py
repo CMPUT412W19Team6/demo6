@@ -99,7 +99,7 @@ class Turn(State):
 
 class Move(State):
     def __init__(self, state):
-        global CURRENT_POSE
+        global CURRENT_STATE
         State.__init__(self, outcomes=["failed", "done"],
                        input_keys=["goal", "current_marker"],
                        output_keys=["current_marker", "goal"])
@@ -107,7 +107,7 @@ class Move(State):
 
         self.move_base_client = actionlib.SimpleActionClient(
             "move_base", MoveBaseAction)
-        CURRENT_POSE = state
+        CURRENT_STATE = state
 
     def execute(self, userdata):
         global client, TAGS_FOUND, START_POSE, TAGS_IN_TOTAL, CURRENT_POSE
@@ -121,7 +121,7 @@ class Move(State):
         # calculate next goal
         if CURRENT_STATE == "MoveToSide":
             userdata.goal = MoveBaseGoal()
-            userdata.goal.target_pose.header.frame_id = "base_link"
+            userdata.goal.target_pose.header.frame_id = "base_footprint"
             userdata.goal.target_pose.pose.position.x = 1
 
         elif CURRENT_STATE == "MoveForward":
