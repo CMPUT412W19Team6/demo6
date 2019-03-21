@@ -29,7 +29,7 @@
     <include file="$(eval find(arg('package')) + '/launch/misc/3dsensor.launch')"/>
 
     <include file="$(find turtlebot_navigation)/launch/includes/velocity_smoother.launch.xml"/>
-    <include file="$(find turtlebot_navigation)/launch/includes/safety_controller.launch.xml"/>
+    <!-- <include file="$(find turtlebot_navigation)/launch/includes/safety_controller.launch.xml"/> -->
 
     <include file="$(eval find(arg('package')) + '/launch/misc/logitech.launch')" if="$(eval joy)">
         <arg name="publish_topic" value="$(arg velocity_topic)"/>

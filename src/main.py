@@ -217,7 +217,7 @@ class MoveCloser(State):
         pose_for_push = PointStamped()
         pose_for_push.header.frame_id = "ar_marker_" + str(self.current_marker)
         pose_for_push.header.stamp = rospy.Time(0)
-        pose_for_push.point.z = -0.8
+        pose_for_push.point.z = -1.5
 
         self.listener.waitForTransform(
             "odom", pose.header.frame_id, rospy.Time(0), rospy.Duration(4))
@@ -227,7 +227,7 @@ class MoveCloser(State):
             "odom", pose_for_push)
 
         PUSH_GOAL = MoveBaseGoal()
-        q = quaternion_from_euler(0, 0, 180)
+        q = quaternion_from_euler(0, 0, -math.pi)
         PUSH_GOAL.target_pose.header.frame_id = "odom"
         PUSH_GOAL.target_pose.pose.position.x = pose_for_push_transformed.point.x
         PUSH_GOAL.target_pose.pose.position.y = pose_for_push_transformed.point.y
@@ -333,7 +333,7 @@ if __name__ == "__main__":
                          "done": "MoveBehind", "failed": "failure"})
 
         StateMachine.add("MoveBehind", Move('MoveBehind'), transitions={
-                         "done": "success", "failed": "failure"})
+                         "done": "PushBox", "failed": "failure"})
 
         StateMachine.add("PushBox", PushBox(), transitions={
                          "done": "success", "failed": "failure"})
